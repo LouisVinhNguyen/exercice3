@@ -1,0 +1,29 @@
+{
+  "name": "ticket-manager",
+  "version": "1.0.0",
+  "description": "API pour une application de support permettant la gestion et le suivi des tickets, avec validation des données via express-validator.",
+  "main": "ticket-manager.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LouisVinhNguyen/exercice3.git"
+  },
+  "keywords": [],
+  "author": "LouisVinhNguyen",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "22.14.0"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "node": "^23.9.0",
+    "sqlite3": "^5.1.7"
+  }
+}

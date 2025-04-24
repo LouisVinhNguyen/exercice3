@@ -1,0 +1,214 @@
+///////////////////////////////////////////////////////////////////////////////
+// TESTS POUR L'APPLICATION DE GESTION DE TICKETS
+// Ces tests couvrent toutes les fonctionnalités de l'API REST
+
+### 1. Réinitialiser la base de données (pour le développement)
+DELETE http://localhost:3000/reset
+
+### 2. Création explicite d'un administrateur (pour les tests)
+# @name createAdmin
+POST http://localhost:3000/api/setup/admin
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin_password",
+  "email": "admin@example.com"
+}
+
+### 3. Connexion administrateur avec le compte créé
+# @name adminLogin
+POST http://localhost:3000/api/auth/admin
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin_password"
+}
+
+### Sauvegarder le token admin
+@adminToken = {{adminLogin.response.body.token}}
+
+### 4. Création d'un nouvel utilisateur par l'administrateur
+POST http://localhost:3000/api/auth/new
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "username": "user1",
+  "password": "password123",
+  "email": "user1@example.com",
+  "role": "user"
+}
+
+### 5. Création d'un nouveau technicien par l'administrateur
+POST http://localhost:3000/api/auth/new
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "username": "tech1",
+  "password": "password123",
+  "email": "tech1@example.com",
+  "role": "technician"
+}
+
+### 6. Tentative de création d'un utilisateur avec un nom/email déjà utilisé
+POST http://localhost:3000/api/auth/new
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "username": "user1",
+  "password": "password123",
+  "email": "user1@example.com",
+  "role": "user"
+}
+
+### 7. Tentative de création d'un utilisateur avec un rôle invalide
+POST http://localhost:3000/api/auth/new
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "username": "invalid",
+  "password": "password123",
+  "email": "invalid@example.com",
+  "role": "super_admin"
+}
+
+### 8. Connexion utilisateur
+# @name userLogin
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "password123"
+}
+
+### Sauvegarder le token utilisateur
+@userToken = {{userLogin.response.body.token}}
+
+### 9. Connexion technicien
+# @name techLogin
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "tech1",
+  "password": "password123"
+}
+
+### Sauvegarder le token technicien
+@techToken = {{techLogin.response.body.token}}
+
+### 10. Création d'un ticket par un utilisateur
+# @name createUserTicket
+POST http://localhost:3000/api/tickets
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "title": "Problème de connexion",
+  "description": "Je ne peux pas me connecter à mon compte",
+  "status": "open",
+  "technicianId": null
+}
+
+### Sauvegarder l'ID du ticket créé par l'utilisateur
+@userTicketId = {{createUserTicket.response.body.ticketId}}
+
+### 11. Création d'un ticket par un technicien
+# @name createTechTicket
+POST http://localhost:3000/api/tickets
+Content-Type: application/json
+Authorization: Bearer {{techToken}}
+
+{
+  "title": "Bug système",
+  "description": "Erreur système détectée",
+  "status": "in progress",
+  "technicianId": null
+}
+
+### Sauvegarder l'ID du ticket créé par le technicien
+@techTicketId = {{createTechTicket.response.body.ticketId}}
+
+### 12. Tentative de création d'un ticket par un administrateur
+POST http://localhost:3000/api/tickets
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "Nouveau problème",
+  "description": "Description du problème",
+  "status": "open",
+  "technicianId": null
+}
+
+### 13. Création d'un ticket avec un statut invalide
+POST http://localhost:3000/api/tickets
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "title": "Problème urgent",
+  "description": "Description du problème",
+  "status": "pending",
+  "technicianId": null
+}
+
+### 14. Récupération de tous les tickets par un utilisateur
+GET http://localhost:3000/api/tickets
+Authorization: Bearer {{userToken}}
+
+### 15. Récupération de tous les tickets par un technicien
+GET http://localhost:3000/api/tickets
+Authorization: Bearer {{techToken}}
+
+### 16. Récupération d'un ticket spécifique par son créateur
+GET http://localhost:3000/api/tickets/{{userTicketId}}
+Authorization: Bearer {{userToken}}
+
+### 17. Récupération d'un ticket par un technicien
+GET http://localhost:3000/api/tickets/{{userTicketId}}
+Authorization: Bearer {{techToken}}
+
+### 18. Tentative de récupération d'un ticket par un autre utilisateur
+# Nécessiterait un deuxième utilisateur, non implémenté dans ce test
+
+### 19. Mise à jour d'un ticket par un technicien
+PUT http://localhost:3000/api/tickets/{{userTicketId}}
+Content-Type: application/json
+Authorization: Bearer {{techToken}}
+
+{
+  "title": "Problème résolu",
+  "description": "Le problème a été résolu",
+  "status": "closed",
+  "technicianId": 2
+}
+
+### 20. Tentative de mise à jour d'un ticket par un utilisateur régulier
+PUT http://localhost:3000/api/tickets/{{techTicketId}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "title": "Mon problème",
+  "description": "Ma description",
+  "status": "closed",
+  "technicianId": 2
+}
+
+### 21. Suppression d'un ticket par un administrateur
+DELETE http://localhost:3000/api/admin/tickets/{{userTicketId}}
+Authorization: Bearer {{adminToken}}
+
+### 22. Tentative de suppression d'un ticket par un utilisateur
+# Cette route n'existe pas, ce qui est le comportement attendu
+DELETE http://localhost:3000/api/tickets/{{techTicketId}}
+Authorization: Bearer {{userToken}}
+///////////////////////////////////////////////////////////////////////////////
+
